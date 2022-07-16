@@ -1,4 +1,5 @@
 
+PShader edges;
 PImage [] img = new PImage[38];
 PImage logoWhite = new PImage();
 PImage logoBlack = new PImage();
@@ -44,6 +45,7 @@ void setup() {
   imageMode(CENTER);
   
   colorSelect = 0;
+  edges = loadShader("edges.glsl");
 }
 
 void draw() {
@@ -51,10 +53,8 @@ void draw() {
   text(""+pulse, width/2, height/2);
   image(img[pulse % img.length], width/2, height/2);
   
-  //filter(INVERT);
-  //filter(ERODE);
-  //filter(DILATE);
-  //filter(POSTERIZE, 2);
+  
+  
   
   int shadowOffset = 5;
   
@@ -106,6 +106,11 @@ void draw() {
   //logoScale = noise(frameCount*PI/300)*40;
   //logoWidth = logoWhite.width / (int) logoScale+1;
   //logoHeight = logoWhite.height / (int) logoScale+1;
+  filter(edges);
+  //filter(INVERT);
+  //filter(ERODE);
+  filter(DILATE);
+  filter(POSTERIZE, 2);
 }
 
 void oscEvent(OscMessage theOscMessage) {  
