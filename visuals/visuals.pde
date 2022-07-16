@@ -1,5 +1,7 @@
 
 PShader edges;
+PShader deform;
+
 PImage [] img = new PImage[38];
 PImage logoWhite = new PImage();
 PImage logoBlack = new PImage();
@@ -10,7 +12,9 @@ float logoScale;
 int logoWidth;
 int logoHeight;
 
+int shadowOffset;
 int colorSelect;
+int filterSelect;
 
 color c1 = color(255, 198, 170);
 color c2 = color(226, 217, 23);
@@ -44,20 +48,34 @@ void setup() {
   
   imageMode(CENTER);
   
+  shadowOffset = 5;
   colorSelect = 0;
+  filterSelect = 0;
   edges = loadShader("edges.glsl");
+  deform = loadShader("deform.glsl");
+  deform.set("resolution", float(width), float(height));
+  textureWrap(REPEAT);
 }
 
 void draw() {
+  deform.set("time", millis() / noise(frameCount*3000)*999);
+  deform.set("mouse", 
+    noise(frameCount*PI/300)*width, 
+    noise(frameCount*PI/2000)*height
+    );
+  
   background(32);
-  text(""+pulse, width/2, height/2);
+  
+  pushStyle();
+  pushMatrix();
+  rotateX(noise(frameCount*PI/2000));
+  if (millis() > 11000) shader(deform);
+  translate(0, -100, -200);
   image(img[pulse % img.length], width/2, height/2);
-  
-  
-  
-  
-  int shadowOffset = 5;
-  
+  filter(edges);
+  popMatrix();
+  popStyle();
+   
   pushMatrix();
   pushStyle();
   //if (random(100)>90) rotateZ(random(1));
@@ -71,34 +89,58 @@ void draw() {
   //fill(226, 217, 23);
   //fill(51, 187, 110);
   
-  switch(colorSelect) {
-   case 0:
-     fill(c1);
-     invertLogo = true;
-   break;
-    case 1:
-     fill(c2);
-     invertLogo = true;
-   break;
-    case 2:
-     fill(c3);
-     invertLogo = true;
-   break;
-    case 3:
-     fill(c4);
-     invertLogo = false;
-   break;   
-  }
+  //switch(colorSelect) {
+  // case 0:
+  //   fill(c1);
+  //   invertLogo = true;
+  // break;
+  //  case 1:
+  //   fill(c2);
+  //   invertLogo = true;
+  // break;
+  //  case 2:
+  //   fill(c3);
+  //   invertLogo = true;
+  // break;
+  //  case 3:
+  //   fill(c4);
+  //   invertLogo = false;
+  // break;   
+  //}
+  
+  fill(c4);
   
   noStroke();
   rect(width/2 - (logoWidth/2), height/2 - (logoHeight/2), logoWidth, logoHeight);
-
+  switch(filterSelect) {
+    case 0:
+      if (random(100) > 90) filter(THRESHOLD);
+    break;
+    case 1:
+      if (random(100) > 90) filter(GRAY);
+    break;
+    case 2:
+      if (random(100) > 90) filter(INVERT);
+    break;
+    case 3:
+      if (random(100) > 90) filter(POSTERIZE, 2);
+    break;
+    case 4:
+      if (random(100) > 90) filter(POSTERIZE, 5);
+    break;
+    case 5:
+      if (random(100) > 90) filter(ERODE);
+    break;
+    case 6:
+      if (random(100) > 90) filter(DILATE);
+    break;
+    default:
+  }
   if (invertLogo) {
     image (logoBlack, width/2, height/2, logoWidth, logoHeight);
   } else {
     image (logoWhite, width/2, height/2, logoWidth, logoHeight);
   }
-  
   
   popStyle();
   popMatrix();
@@ -106,22 +148,25 @@ void draw() {
   //logoScale = noise(frameCount*PI/300)*40;
   //logoWidth = logoWhite.width / (int) logoScale+1;
   //logoHeight = logoWhite.height / (int) logoScale+1;
-  filter(edges);
-  //filter(INVERT);
-  //filter(ERODE);
-  filter(DILATE);
-  filter(POSTERIZE, 2);
+  
+  
 }
 
 void oscEvent(OscMessage theOscMessage) {  
   if(theOscMessage.checkAddrPattern("/pulse")==true) {
     //println("pulse received");
-    pulse++;
-    colorSelect = (int) random(4);
+    nextTick ();
   } 
 }
 
 void mousePressed () {
+  nextTick ();
+}
+
+void nextTick () {
   pulse++;
   colorSelect = (int) random(4);
+  if (random(100) > 90) {
+    filterSelect = (int) random(8);
+  }
 }
