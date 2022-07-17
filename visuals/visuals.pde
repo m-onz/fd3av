@@ -1,4 +1,8 @@
 
+import com.hamoid.*;
+
+VideoExport videoExport;
+
 PShader edges;
 PShader deform;
 
@@ -30,7 +34,7 @@ NetAddress myRemoteLocation;
 int pulse = 0;
 
 void setup() {
-  size(1024, 768, P3D);
+  size(1920, 1080, P3D);
   frameRate (20);
   oscP5 = new OscP5(this, 12000);
   myRemoteLocation = new NetAddress("127.0.0.1", 12000);
@@ -55,24 +59,30 @@ void setup() {
   deform = loadShader("deform.glsl");
   deform.set("resolution", float(width), float(height));
   textureWrap(REPEAT);
+  
+  videoExport = new VideoExport(this);
+  videoExport.setQuality(100, 128);
+  videoExport.startMovie();
 }
 
 void draw() {
-  deform.set("time", millis() / noise(frameCount*3000)*999);
-  deform.set("mouse", 
-    noise(frameCount*PI/300)*width, 
-    noise(frameCount*PI/2000)*height
-    );
+  //deform.set("time", millis() / noise(frameCount*3000)*999);
+  //deform.set("mouse", 
+  //  noise(frameCount*PI/300)*width, 
+  //  noise(frameCount*PI/2000)*height
+  //  );
   
   background(32);
   
   pushStyle();
   pushMatrix();
   rotateX(noise(frameCount*PI/2000));
-  if (millis() > 11000) shader(deform);
+  //if (millis() > 11000) 
+  //shader(deform);
   translate(0, -100, -200);
+  //translate(0, -100, 200);
   image(img[pulse % img.length], width/2, height/2);
-  filter(edges);
+  
   popMatrix();
   popStyle();
    
@@ -111,7 +121,8 @@ void draw() {
   fill(c4);
   
   noStroke();
-  rect(width/2 - (logoWidth/2), height/2 - (logoHeight/2), logoWidth, logoHeight);
+  
+  /*
   switch(filterSelect) {
     case 0:
       if (random(100) > 90) filter(THRESHOLD);
@@ -136,6 +147,9 @@ void draw() {
     break;
     default:
   }
+  */
+  translate(0, 0, 200);
+  rect(width/2 - (logoWidth/2), height/2 - (logoHeight/2), logoWidth, logoHeight);
   if (invertLogo) {
     image (logoBlack, width/2, height/2, logoWidth, logoHeight);
   } else {
@@ -149,7 +163,9 @@ void draw() {
   //logoWidth = logoWhite.width / (int) logoScale+1;
   //logoHeight = logoWhite.height / (int) logoScale+1;
   
+  filter(edges);
   
+  videoExport.saveFrame();
 }
 
 void oscEvent(OscMessage theOscMessage) {  
@@ -168,5 +184,12 @@ void nextTick () {
   colorSelect = (int) random(4);
   if (random(100) > 90) {
     filterSelect = (int) random(8);
+  }
+}
+
+void keyPressed() {
+  if (key == 'q') {
+    videoExport.endMovie();
+    exit();
   }
 }
